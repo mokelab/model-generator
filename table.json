@@ -1,0 +1,20 @@
+{
+    "tables":[
+        {
+            "name" : "user",
+            "fields" : [
+                {
+                    "name" : "id",
+                    "type" : "varchar(32)"
+                },
+                {
+                    "name" : "name",
+                    "type" : "text"
+                }
+            ],
+            "primary_keys" : [
+                "id"
+            ]
+        }
+    ]
+}

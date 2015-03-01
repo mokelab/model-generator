@@ -63,7 +63,7 @@ func (g *generator) generateCreateImpl(table, goTable *model.Table, name, typeNa
 		"\tif err != nil {\n"+
 		"\t\treturn nil, err\n"+
 		"\t}\n\n",
-		g.generateKeyArgs(goTable))
+		g.generateArgs(goTable))
 	// commit
 	body = body + "\ttr.Commit()\n\n"
 	// return

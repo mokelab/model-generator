@@ -5,10 +5,11 @@ import (
 )
 
 type Table struct {
-	Name        string
-	Fields      []*Field
-	FieldMap    map[string]*Field
-	PrimaryKeys []string
+	Name          string
+	Fields        []*Field
+	FieldMap      map[string]*Field
+	PrimaryKeys   []string
+	PrimaryKeySet map[string]bool
 }
 
 type Field struct {
@@ -53,17 +54,20 @@ func ParseTable(json rj.RawJsonObject) (*Table, error) {
 	}
 	// primary key
 	var primaryKeys []string
+	var primaryKeySet = make(map[string]bool)
 	for i := 0; i < len(keyArray); i++ {
 		key, err := keyArray.String(i)
 		if err != nil {
 			continue
 		}
 		primaryKeys = append(primaryKeys, key)
+		primaryKeySet[key] = true
 	}
 	return &Table{
-		Name:        name,
-		Fields:      fields,
-		FieldMap:    fieldMap,
-		PrimaryKeys: primaryKeys,
+		Name:          name,
+		Fields:        fields,
+		FieldMap:      fieldMap,
+		PrimaryKeys:   primaryKeys,
+		PrimaryKeySet: primaryKeySet,
 	}, nil
 }

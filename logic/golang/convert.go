@@ -16,9 +16,10 @@ func (g *generator) convertTable(table *model.Table) *model.Table {
 		goFieldMap[field.Name] = goField
 	}
 	return &model.Table{
-		Name:        table.Name,
-		Fields:      goFields,
-		FieldMap:    goFieldMap,
-		PrimaryKeys: table.PrimaryKeys,
+		Name:          table.Name,
+		Fields:        goFields,
+		FieldMap:      goFieldMap,
+		PrimaryKeys:   table.PrimaryKeys,
+		PrimaryKeySet: table.PrimaryKeySet,
 	}
 }

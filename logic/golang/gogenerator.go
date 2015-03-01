@@ -39,6 +39,7 @@ func (g *generator) Generate(tables []*model.Table) {
 		goTable := g.convertTable(table)
 		g.generateType(goTable)
 		g.generateImpl(table, goTable)
+		g.generateImplTest(table, goTable)
 	}
 }
 

@@ -8,8 +8,12 @@
                     "type" : "varchar(32)"
                 },
                 {
-                    "name" : "user_name",
+                    "name" : "login_name",
                     "type" : "text"
+                },
+                {
+                    "name" : "password",
+                    "type" : "varchar(32)"
                 }
             ],
             "primary_keys" : [

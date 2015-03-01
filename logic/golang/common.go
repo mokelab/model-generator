@@ -59,6 +59,18 @@ func (g *generator) generateKeyParams(table *model.Table) string {
 	return body
 }
 
+func (g *generator) generateKeyArgs(table *model.Table) string {
+	body := ""
+	for i, id := range table.PrimaryKeys {
+		field := table.FieldMap[id]
+		if i > 0 {
+			body = body + ", "
+		}
+		body = body + field.Name
+	}
+	return body
+}
+
 func (g *generator) generateParams(table *model.Table) string {
 	body := ""
 	for i, field := range table.Fields {
@@ -74,6 +86,17 @@ func (g *generator) generateParams(table *model.Table) string {
 			}
 		}
 		body = body + field.Name + " " + field.Type
+	}
+	return body
+}
+
+func (g *generator) generateArgs(table *model.Table) string {
+	body := ""
+	for i, field := range table.Fields {
+		if i > 0 {
+			body = body + ", "
+		}
+		body = body + field.Name
 	}
 	return body
 }

@@ -6,7 +6,7 @@ import (
 )
 
 type Generator interface {
-	Generate(tables []*model.Table)
+	Generate(tables []*model.Table, testInfo *model.TestInfo)
 }
 
 func CreateGenerator() Generator {

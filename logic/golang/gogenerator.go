@@ -13,7 +13,7 @@ func CreateGenerator() *generator {
 	return &generator{}
 }
 
-func (g *generator) Generate(tables []*model.Table) {
+func (g *generator) Generate(tables []*model.Table, testInfo *model.TestInfo) {
 	// create output
 	err := os.RemoveAll("output")
 	if err != nil {
@@ -34,6 +34,7 @@ func (g *generator) Generate(tables []*model.Table) {
 	}
 
 	g.generateConnection()
+	g.generateTestConnection(testInfo)
 	for _, table := range tables {
 		// convert
 		goTable := g.convertTable(table)
@@ -84,6 +85,43 @@ func (g *generator) generateConnection() {
 		"func (c *Connection) Begin() (*sql.Tx, error) {\n" +
 		"\treturn c.db.Begin()\n" +
 		"}\n"
+	_, err = file.WriteString(body)
+	if err != nil {
+		fmt.Printf("Failed to Write : %s\n", err)
+		return
+	}
+	file.Close()
+}
+
+func (g *generator) generateTestConnection(testInfo *model.TestInfo) {
+	fileName := "output/model/impl/connection_test.go"
+	file, err := os.Create(fileName)
+	if err != nil {
+		fmt.Printf("Failed to open %s : %s\n", fileName, err)
+		return
+	}
+
+	body := fmt.Sprintf("package impl\n\n"+
+		"import (\n"+
+		"\t\"database/sql\"\n"+
+		"\t_ \"github.com/go-sql-driver/mysql\"\n"+
+		")\n\n"+
+		"func connect() (*sql.DB, error) {\n"+
+		"\treturn sql.Open(\"%s\", \"%s\")\n"+
+		"}\n\n"+
+		"func begin() (*sql.DB, *sql.Tx, error) {\n"+
+		"\tdb, err := connect()\n"+
+		"\tif err != nil {\n"+
+		"\t\treturn nil, nil, err\n"+
+		"\t}\n\n"+
+		"\ttx, err := db.Begin()\n"+
+		"\tif err != nil {\n"+
+		"\t\tdb.Close()\n"+
+		"\t\treturn nil, nil, err\n"+
+		"\t}\n\n"+
+		"\treturn db, tx, nil\n"+
+		"}\n",
+		testInfo.DBType, testInfo.DBDSN)
 	_, err = file.WriteString(body)
 	if err != nil {
 		fmt.Printf("Failed to Write : %s\n", err)

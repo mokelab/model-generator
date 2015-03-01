@@ -27,7 +27,12 @@ func main() {
 	}
 	array, err := obj.Array("tables")
 	if err != nil {
-		fmt.Printf("Failed to field \"tables\" : %s", err)
+		fmt.Printf("Failed to array field \"tables\" : %s", err)
+		return
+	}
+	testInfoObj, err := obj.Object("test")
+	if err != nil {
+		fmt.Printf("Failed to object field \"test\" : %s", err)
 		return
 	}
 	var tables []*model.Table
@@ -42,6 +47,11 @@ func main() {
 		}
 		tables = append(tables, table)
 	}
+	testInfo, err := model.ParseTestInfo(testInfoObj)
+	if err != nil {
+		fmt.Printf("Failed to parse \"test\" field : %s", err)
+		return
+	}
 	g := logic.CreateGenerator()
-	g.Generate(tables)
+	g.Generate(tables, testInfo)
 }

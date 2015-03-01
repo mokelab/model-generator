@@ -20,5 +20,12 @@
                 "id"
             ]
         }
-    ]
+    ],
+    "db" : {
+        "type" : "mysql"
+    },
+    "test" : {
+        "db_type" : "mysql",
+        "db_dsn" : "openinvoice_test:openinvoice@/openinvoice"
+    }
 }

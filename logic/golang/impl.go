@@ -52,7 +52,7 @@ func (g *generator) generateCreateImpl(table, goTable *model.Table, name, typeNa
 	body := fmt.Sprintf("func (d *%sDAO) %s {\n",
 		name, g.generateCreateSignature("m."+typeName, goTable))
 	body = body + g.generateBegin()
-	body = body + fmt.Sprintf("\n\tst, err := tr.Prepare(\"INSERT INTO %s(%s) VALUES(%s)\")\n"+
+	body = body + fmt.Sprintf("\n\tst, err := tr.Prepare(\"INSERT INTO %s(%s,created_time,modified_time,deleted) VALUES(%s,unix_timestamp(now()),unix_timestamp(now()),0)\")\n"+
 		"\tif err != nil {\n"+
 		"\t\treturn nil, err\n"+
 		"\t}\n"+
@@ -103,7 +103,7 @@ func (g *generator) generateUpdateImpl(table, goTable *model.Table, name, typeNa
 		name, g.generateUpdateSignature("m."+typeName, goTable))
 	body = body + g.generateConnect()
 	// query
-	body = body + fmt.Sprintf("\tst, err := db.Prepare(\"UPDATE %s SET %s WHERE %s AND deleted <> 1\")\n"+
+	body = body + fmt.Sprintf("\tst, err := db.Prepare(\"UPDATE %s SET %s,modified_time=unix_timestamp(now()) WHERE %s AND deleted <> 1\")\n"+
 		"\tif err != nil {\n"+
 		"\t\treturn nil, err\n"+
 		"\t}\n"+
@@ -126,7 +126,7 @@ func (g *generator) generateDeleteImpl(table, goTable *model.Table, name, typeNa
 		name, g.generateDeleteSignature("m."+typeName, goTable))
 	body = body + g.generateConnect()
 	// query
-	body = body + fmt.Sprintf("\tst, err := db.Prepare(\"UPDATE %s SET deleted=1 WHERE %s AND deleted <> 1\")\n"+
+	body = body + fmt.Sprintf("\tst, err := db.Prepare(\"UPDATE %s SET modified_time=unix_timestamp(now()),deleted=1 WHERE %s AND deleted <> 1\")\n"+
 		"\tif err != nil {\n"+
 		"\t\treturn nil, err\n"+
 		"\t}\n"+

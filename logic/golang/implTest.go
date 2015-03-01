@@ -41,7 +41,24 @@ func (g *generator) generateTestUtils(table, goTable *model.Table, name, typeNam
 		typeName, name, typeName)
 	body = body + fmt.Sprintf("func assert%s(t *testing.T, item *m.%s, %s) {\n",
 		typeName, typeName, g.generateParams(goTable))
-	body = body + "}\n"
+	for _, field := range goTable.Fields {
+		body = body + fmt.Sprintf("\tif item.%s != %s {\n"+
+			"\t\tt.Errorf(\"%s must be %%s but %%s\", %s, item.%s)\n"+
+			"\t}\n",
+			g.toPublic(field.Name), field.Name,
+			field.Name, field.Name, g.toPublic(field.Name))
+	}
+	body = body + "}\n\n"
+	// HardDelete
+	body = body + fmt.Sprintf("func hardDelete%s(db *sql.DB, %s) {\n"+
+		"\ts, _ := db.Prepare(\"DELETE FROM %s WHERE %s\")\n"+
+		"\tdefer s.Close()\n"+
+		"\ts.Exec(%s)\n"+
+		"}\n",
+		typeName, g.generateKeyParams(goTable),
+		name, g.generateKeyWhere(table),
+		g.generateKeyArgs(goTable),
+	)
 
 	return body
 }
@@ -59,6 +76,8 @@ func (g *generator) generateAllTest(table, goTable *model.Table, name, typeName 
 	body = body + fmt.Sprintf("\tdao := create%sDAO(db)\n\n", typeName)
 	// Create
 	body = body + g.generateTestValues(goTable)
+	body = body + fmt.Sprintf("\thardDelete%s(db, %s)\n",
+		typeName, g.generateKeyArgs(goTable))
 	body = body + fmt.Sprintf("\titem, err := dao.Create(%s)\n",
 		g.generateArgs(goTable))
 	body = body + "\tif err != nil {\n" +

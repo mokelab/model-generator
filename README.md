@@ -6,6 +6,7 @@ Code generator.
 
 1. Write table definitions in table.json
 
+```
     {
         "tables":[
             {
@@ -37,9 +38,12 @@ Code generator.
             "db_dsn" : "testUser:pass@/testDatabase"
         }
     }
+```
 
 2. Execute the following command.
 
+```
     $ go run main.go -file=table.json
+```
 
 3. Copy generated codes(output folder) to your project.

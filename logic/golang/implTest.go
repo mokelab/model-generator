@@ -7,7 +7,7 @@ import (
 )
 
 func (g *generator) generateImplTest(table, goTable *model.Table) {
-	typeName := g.toPublic(table.Name)
+	typeName := g.toPublic(g.toCamelcase(table.Name))
 
 	fileName := fmt.Sprintf("output/model/impl/%s_test.go", table.Name)
 	file, err := os.Create(fileName)

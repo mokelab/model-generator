@@ -16,9 +16,10 @@ func (g *generator) generateType(table *model.Table) {
 		return
 	}
 
-	body := fmt.Sprintf("package model\n\n%s\n%s",
+	body := fmt.Sprintf("package model\n\n%s\n%s\n%s",
 		g.generateInterface(typeName, table),
 		g.generateEntity(typeName, table),
+		g.generateMethod(typeName, table),
 	)
 
 	_, err = file.WriteString(body)
@@ -41,22 +42,22 @@ func (g *generator) generateInterface(typeName string, table *model.Table) strin
 
 func (g *generator) generateCreateSignature(typeName string, table *model.Table) string {
 	return "Create(" + g.generateParams(table) + ") " +
-		"(*" + typeName + ", error)"
+		"(" + typeName + ", error)"
 }
 
 func (g *generator) generateGetSignature(typeName string, table *model.Table) string {
 	return "Get(" + g.generateKeyParams(table) + ") " +
-		"(*" + typeName + ", error)"
+		"(" + typeName + ", error)"
 }
 
 func (g *generator) generateUpdateSignature(typeName string, table *model.Table) string {
 	return "Update(" + g.generateParams(table) + ") " +
-		"(*" + typeName + ", error)"
+		"(" + typeName + ", error)"
 }
 
 func (g *generator) generateDeleteSignature(typeName string, table *model.Table) string {
 	return "Delete(" + g.generateKeyParams(table) + ") " +
-		"(*" + typeName + ", error)"
+		"(" + typeName + ", error)"
 }
 
 func (g *generator) generateEntity(typeName string, table *model.Table) string {
@@ -65,5 +66,17 @@ func (g *generator) generateEntity(typeName string, table *model.Table) string {
 		body = body + "\t" + g.toPublic(field.Name) + " " + field.Type + "\n"
 	}
 	body = body + "}\n"
+	return body
+}
+
+func (g *generator) generateMethod(typeName string, table *model.Table) string {
+	body := fmt.Sprintf("func (o %s) IsEmpty() bool {\n\treturn ", typeName)
+	for i, key := range table.PrimaryKeys {
+		if i > 0 {
+			body = body + " && "
+		}
+		body = body + "len(o." + g.toPublic(key) + ") == 0"
+	}
+	body = body + "\n}\n"
 	return body
 }

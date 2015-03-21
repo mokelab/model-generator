@@ -7,7 +7,7 @@ import (
 )
 
 func (g *generator) generateImpl(table, goTable *model.Table) {
-	typeName := g.toPublic(table.Name)
+	typeName := g.toPublic(g.toCamelcase(table.Name))
 
 	fileName := fmt.Sprintf("output/model/impl/%s.go", table.Name)
 	file, err := os.Create(fileName)
@@ -51,19 +51,25 @@ func (g *generator) generateConstructor(name, typeName string) string {
 func (g *generator) generateCreateImpl(table, goTable *model.Table, name, typeName string) string {
 	body := fmt.Sprintf("func (d *%sDAO) %s {\n",
 		name, g.generateCreateSignature("m."+typeName, goTable))
-	body = body + g.generateBegin()
+	body = body + g.generateBegin(typeName)
 	body = body + fmt.Sprintf("\n\tst, err := tr.Prepare(\"INSERT INTO %s(%s,created_time,modified_time,deleted) VALUES(%s,unix_timestamp(now()),unix_timestamp(now()),0)\")\n"+
 		"\tif err != nil {\n"+
-		"\t\treturn nil, err\n"+
+		"\t\treturn m.%s{}, err\n"+
 		"\t}\n"+
 		"\tdefer st.Close()\n\n",
-		name, g.generateRows(table), g.generatePlaceholder(table))
+		name,
+		g.generateRows(table),
+		g.generatePlaceholder(table),
+		typeName,
+	)
 	// exec
 	body = body + fmt.Sprintf("\t_, err = st.Exec(%s)\n"+
 		"\tif err != nil {\n"+
-		"\t\treturn nil, err\n"+
+		"\t\treturn m.%s{}, err\n"+
 		"\t}\n\n",
-		g.generateArgs(goTable))
+		g.generateArgs(goTable),
+		typeName,
+	)
 	// commit
 	body = body + "\ttr.Commit()\n\n"
 	// return
@@ -78,20 +84,28 @@ func (g *generator) generateGetImpl(table, goTable *model.Table, name, typeName 
 	body = body + g.generateConnect()
 	body = body + fmt.Sprintf("\tst, err := db.Prepare(\"SELECT %s FROM %s WHERE %s AND deleted <> 1\")\n"+
 		"\tif err != nil {\n"+
-		"\t\treturn nil, err\n"+
+		"\t\treturn m.%s{}, err\n"+
 		"\t}\n"+
 		"\tdefer st.Close()\n\n",
-		g.generateRows(table), name, g.generateKeyWhere(table))
+		g.generateRows(table),
+		name,
+		g.generateKeyWhere(table),
+		typeName,
+	)
 	// execute
 	body = body + fmt.Sprintf("\trows, err := st.Query(%s)\n"+
 		"\tif err != nil {\n"+
-		"\t\treturn nil, err\n"+
+		"\t\treturn m.%s{}, err\n"+
 		"\t}\n"+
 		"\tdefer rows.Close()\n\n",
-		g.generateKeyArgs(goTable))
-	body = body + "\tif !rows.Next() {\n" +
-		"\t\treturn nil, nil\n" +
-		"\t}\n\n"
+		g.generateKeyArgs(goTable),
+		typeName,
+	)
+	body = body + fmt.Sprintf("\tif !rows.Next() {\n"+
+		"\t\treturn m.%s{}, nil\n"+
+		"\t}\n\n",
+		typeName,
+	)
 	// return
 	body = body + "\treturn d.scan(rows), nil\n"
 	body = body + "}\n"
@@ -105,16 +119,23 @@ func (g *generator) generateUpdateImpl(table, goTable *model.Table, name, typeNa
 	// query
 	body = body + fmt.Sprintf("\tst, err := db.Prepare(\"UPDATE %s SET %s,modified_time=unix_timestamp(now()) WHERE %s AND deleted <> 1\")\n"+
 		"\tif err != nil {\n"+
-		"\t\treturn nil, err\n"+
+		"\t\treturn m.%s{}, err\n"+
 		"\t}\n"+
 		"\tdefer st.Close()\n\n",
-		name, g.generateUpdateSet(table), g.generateKeyWhere(table))
+		name,
+		g.generateUpdateSet(table),
+		g.generateKeyWhere(table),
+		typeName,
+	)
 	// exec
 	body = body + fmt.Sprintf("\t_, err = st.Exec(%s, %s)\n"+
 		"\tif err != nil {\n"+
-		"\t\treturn nil, err\n"+
+		"\t\treturn m.%s{}, err\n"+
 		"\t}\n\n",
-		g.generateArgs(goTable), g.generateKeyArgs(goTable))
+		g.generateArgs(goTable),
+		g.generateKeyArgs(goTable),
+		typeName,
+	)
 	// return
 	body = body + g.generateReturn(typeName, goTable, ", nil\n")
 	body = body + "}\n"
@@ -128,24 +149,31 @@ func (g *generator) generateDeleteImpl(table, goTable *model.Table, name, typeNa
 	// query
 	body = body + fmt.Sprintf("\tst, err := db.Prepare(\"UPDATE %s SET modified_time=unix_timestamp(now()),deleted=1 WHERE %s AND deleted <> 1\")\n"+
 		"\tif err != nil {\n"+
-		"\t\treturn nil, err\n"+
+		"\t\treturn m.%s{}, err\n"+
 		"\t}\n"+
 		"\tdefer st.Close()\n\n",
-		name, g.generateKeyWhere(table))
+		name,
+		g.generateKeyWhere(table),
+		typeName,
+	)
 	// exec
 	body = body + fmt.Sprintf("\t_, err = st.Exec(%s)\n"+
 		"\tif err != nil {\n"+
-		"\t\treturn nil, err\n"+
+		"\t\treturn m.%s{}, err\n"+
 		"\t}\n\n",
-		g.generateKeyArgs(goTable))
+		g.generateKeyArgs(goTable),
+		typeName,
+	)
 	// return
-	body = body + "\treturn nil, nil\n"
+	body = body + fmt.Sprintf("\treturn m.%s{}, nil\n",
+		typeName,
+	)
 	body = body + "}\n"
 	return body
 }
 
 func (g *generator) generateScan(table, goTable *model.Table, name, typeName string) string {
-	body := fmt.Sprintf("func (d *%sDAO) scan(rows *sql.Rows) *m.%s {\n",
+	body := fmt.Sprintf("func (d *%sDAO) scan(rows *sql.Rows) m.%s {\n",
 		name, typeName)
 	for _, field := range goTable.Fields {
 		body = body + fmt.Sprintf("\tvar %s %s\n", field.Name, field.Type)
@@ -171,12 +199,14 @@ func (g *generator) generateConnect() string {
 	return "\tdb := d.connection.Connect()\n"
 }
 
-func (g *generator) generateBegin() string {
-	return "\ttr, err := d.connection.Begin()\n" +
-		"\tif err != nil {\n" +
-		"\t\treturn nil, err\n" +
-		"\t}\n" +
-		"\tdefer tr.Rollback()\n"
+func (g *generator) generateBegin(typeName string) string {
+	return fmt.Sprintf("\ttr, err := d.connection.Begin()\n"+
+		"\tif err != nil {\n"+
+		"\t\treturn m.%s{}, err\n"+
+		"\t}\n"+
+		"\tdefer tr.Rollback()\n",
+		typeName,
+	)
 }
 
 func (g *generator) generateRows(table *model.Table) string {
@@ -202,7 +232,7 @@ func (g *generator) generatePlaceholder(table *model.Table) string {
 }
 
 func (g *generator) generateReturn(typeName string, table *model.Table, postfix string) string {
-	body := fmt.Sprintf("\treturn &m.%s {\n", typeName)
+	body := fmt.Sprintf("\treturn m.%s {\n", typeName)
 	for _, field := range table.Fields {
 		body = body + fmt.Sprintf("\t\t%s: %s,\n",
 			g.toPublic(field.Name), field.Name)

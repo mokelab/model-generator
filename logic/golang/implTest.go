@@ -7,7 +7,7 @@ import (
 )
 
 func (g *generator) generateImplTest(table, goTable *model.Table) {
-	typeName := g.toPublic(table.Name)
+	typeName := g.toPublic(g.toCamelcase(table.Name))
 
 	fileName := fmt.Sprintf("output/model/impl/%s_test.go", table.Name)
 	file, err := os.Create(fileName)
@@ -84,7 +84,7 @@ func (g *generator) generateAllTest(table, goTable *model.Table, name, typeName 
 		"\t\tt.Errorf(\"Failed to Create : %s\", err)\n" +
 		"\t\treturn\n" +
 		"\t}\n"
-	body = body + fmt.Sprintf("\tassert%s(t, item, %s)\n\n",
+	body = body + fmt.Sprintf("\tassert%s(t, &item, %s)\n\n",
 		typeName, g.generateTestAssertValues(goTable))
 	// Get
 	body = body + fmt.Sprintf("\titem2, err := dao.Get(%s)\n",
@@ -94,7 +94,7 @@ func (g *generator) generateAllTest(table, goTable *model.Table, name, typeName 
 		"\t\tt.Errorf(\"Failed to Get : %s\", err)\n" +
 		"\t\treturn\n" +
 		"\t}\n"
-	body = body + fmt.Sprintf("\tassert%s(t, item2, %s)\n\n",
+	body = body + fmt.Sprintf("\tassert%s(t, &item2, %s)\n\n",
 		typeName, g.generateTestAssertValues(goTable))
 	// Update
 	body = body + g.generateTestUpdateValues(goTable)
@@ -105,7 +105,7 @@ func (g *generator) generateAllTest(table, goTable *model.Table, name, typeName 
 		"\t\tt.Errorf(\"Failed to Update : %s\", err)\n" +
 		"\t\treturn\n" +
 		"\t}\n"
-	body = body + fmt.Sprintf("\tassert%s(t, item3, %s)\n\n",
+	body = body + fmt.Sprintf("\tassert%s(t, &item3, %s)\n\n",
 		typeName, g.generateTestAssertUpdateValues(goTable))
 	// Update check
 	body = body + fmt.Sprintf("\titem4, err := dao.Get(%s)\n",
@@ -115,7 +115,7 @@ func (g *generator) generateAllTest(table, goTable *model.Table, name, typeName 
 		"\t\tt.Errorf(\"Failed to Get : %s\", err)\n" +
 		"\t\treturn\n" +
 		"\t}\n"
-	body = body + fmt.Sprintf("\tassert%s(t, item4, %s)\n\n",
+	body = body + fmt.Sprintf("\tassert%s(t, &item4, %s)\n\n",
 		typeName, g.generateTestAssertUpdateValues(goTable))
 	// Delete
 	body = body + fmt.Sprintf("\titem5, err := dao.Delete(%s)\n",
@@ -125,8 +125,8 @@ func (g *generator) generateAllTest(table, goTable *model.Table, name, typeName 
 		"\t\tt.Errorf(\"Failed to Delete : %s\", err)\n" +
 		"\t\treturn\n" +
 		"\t}\n"
-	body = body + "\tif item5 != nil {\n" +
-		"\t\tt.Errorf(\"Returned item must be nil\")\n" +
+	body = body + "\tif !item5.IsEmpty() {\n" +
+		"\t\tt.Errorf(\"Returned item must be empty\")\n" +
 		"\t\treturn\n" +
 		"\t}\n"
 	// Delete check
@@ -137,8 +137,8 @@ func (g *generator) generateAllTest(table, goTable *model.Table, name, typeName 
 		"\t\tt.Errorf(\"Failed to Get : %s\", err)\n" +
 		"\t\treturn\n" +
 		"\t}\n"
-	body = body + "\tif item6 != nil {\n" +
-		"\t\tt.Errorf(\"Item must be nil\")\n" +
+	body = body + "\tif !item6.IsEmpty() {\n" +
+		"\t\tt.Errorf(\"Item must be empty\")\n" +
 		"\t\treturn\n" +
 		"\t}\n"
 	body = body + "}\n"

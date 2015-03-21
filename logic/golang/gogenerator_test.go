@@ -20,7 +20,7 @@ func TestGenerator_0000_GetSignatue_1(t *testing.T) {
 	}
 
 	sig := g.generateGetSignature("User", table)
-	if sig != "Get(id string) (*User, error)" {
+	if sig != "Get(id string) (User, error)" {
 		t.Errorf("Unexpected signature")
 	}
 }
@@ -45,7 +45,7 @@ func TestGenerator_0001_GetSignatue_2(t *testing.T) {
 	}
 
 	sig := g.generateGetSignature("Inventory", table)
-	if sig != "Get(id string, userId string) (*Inventory, error)" {
+	if sig != "Get(id string, userId string) (Inventory, error)" {
 		t.Errorf("Unexpected signature %s", sig)
 	}
 }
